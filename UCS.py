@@ -85,3 +85,56 @@ words = ["hot","wow", "dog", "lot", "log", "cog"]
 
 result=wl_ucs(strtWord, endcha, words)
 print(result)  
+
+
+
+
+
+
+
+
+
+def path_cost(path):
+    # Cost is calculated as the length of the path (number of transformations)
+    total_cost = len(path) - 1  # Cost is one less than the number of words in the path
+    return total_cost
+
+
+def wl_ucs(start, end, list_word):
+    cur_word = set(list_word)  # Unique words to explore
+    
+    # Queue holds tuples of (current word, path from start to current word)
+    queue = [(start, [start])]  # (word, path)
+    
+    while queue:
+        # Sort queue by the path cost (UCS behavior)
+        queue.sort(key=lambda x: path_cost(x[1]))
+        
+        # Extract the word and its current path
+        word, path = queue.pop(0)
+        
+        if word == end:
+            return path, path_cost(path)  # Return path and its cost
+        
+        # Generate next words by changing each letter
+        alpha_ord = 'abcdefghijklmnopqrstuvwxyz'
+        for i in range(len(word)):
+            for char in alpha_ord:
+                pred_word = word[:i] + char + word[i+1:]
+                
+                if pred_word in cur_word:
+                    queue.append((pred_word, path + [pred_word]))
+                    cur_word.remove(pred_word)  # Mark as visited
+
+    return [], 0  # Return empty path and zero cost if no path found
+
+
+# Test the UCS-based Word Ladder
+start_word = "hit"
+end_word = "cog"
+word_list = ["hot", "dot", "dog", "lot", "log", "cog"]
+
+result_path, total_cost = wl_ucs(start_word, end_word, word_list)
+print("Shortest Path:", result_path)
+print("Total Cost (transformations):", total_cost)
+
