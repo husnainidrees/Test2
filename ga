@@ -1,0 +1,66 @@
+import random
+
+# Fitness function ko define karte hain
+def fitness(individual):
+    return sum(individual)
+
+# Ek naya individual banate hain randomly
+def create_individual(length):
+    return [random.randint(0, 1) for _ in range(length)]
+
+# Population create karte hain
+def create_population(size, length):
+    return [create_individual(length) for _ in range(size)]
+
+# Selection process jo best individuals ko choose karta hai
+def selection(population):
+    population.sort(key=lambda x: fitness(x), reverse=True)
+    return population[:2]
+
+# Crossover (do parents ko combine karke nayi offspring banate hain)
+def crossover(parent1, parent2):
+    crossover_point = random.randint(1, len(parent1) - 1)
+    child1 = parent1[:crossover_point] + parent2[crossover_point:]
+    child2 = parent2[:crossover_point] + parent1[crossover_point:]
+    return child1, child2
+
+# Mutation (offspring ko thoda change karte hain)
+def mutate(individual):
+    mutation_point = random.randint(0, len(individual) - 1)
+    individual[mutation_point] = 1 - individual[mutation_point]
+
+# Genetic Algorithm
+def genetic_algorithm(population_size, individual_length, generations):
+    population = create_population(population_size, individual_length)
+
+    for generation in range(generations):
+        print(f"Generation {generation}: {population}")
+
+        # Select the best individuals for reproduction
+        parents = selection(population)
+
+        # Create new individuals using crossover
+        children = []
+        for _ in range(population_size // 2):  # Har dafa 2 bachay bnaenge
+            child1, child2 = crossover(parents[0], parents[1])
+            children.append(child1)
+            children.append(child2)
+
+        # Apply mutation
+        for child in children:
+            if random.random() < 0.1:  # 10% chance mutation ka
+                mutate(child)
+
+        # Replace old population with new children
+        population = children
+
+    best_individual = max(population, key=lambda x: fitness(x))
+    return best_individual
+
+# Main function
+population_size = 10
+individual_length = 5
+generations = 5
+
+best_solution = genetic_algorithm(population_size, individual_length, generations)
+print("Best solution:", best_solution)
