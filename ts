@@ -110,3 +110,255 @@ generations = 50
 best_route, best_distance = genetic_algorithm(population_size, generations)
 print("Best route:", best_route)
 print("Best distance:", best_distance)
+
+
+
+
+maze 
+import random
+import numpy as np
+
+# Define the maze: 0 for open path, 1 for wall
+maze = [
+    [0, 1, 0, 0, 0],
+    [0, 1, 0, 1, 0],
+    [0, 0, 0, 1, 0],
+    [0, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0]
+]
+
+start = (0, 0)  # Start point
+goal = (4, 4)   # Goal point
+
+# Genetic Algorithm Parameters
+population_size = 100
+generations = 1000
+mutation_rate = 0.1
+
+# Define moves
+moves = ['up', 'down', 'left', 'right']
+
+# Function to initialize population
+def initialize_population():
+    return [random.choices(moves, k=15) for _ in range(population_size)]
+
+# Function to check if a position is valid
+def is_valid(pos):
+    x, y = pos
+    if 0 <= x < len(maze) and 0 <= y < len(maze[0]) and maze[x][y] == 0:
+        return True
+    return False
+
+# Function to compute fitness based on distance from goal
+def fitness(individual):
+    pos = list(start)
+    for move in individual:
+        if move == 'up':
+            pos[0] -= 1
+        elif move == 'down':
+            pos[0] += 1
+        elif move == 'left':
+            pos[1] -= 1
+        elif move == 'right':
+            pos[1] += 1
+        if not is_valid(pos):
+            break
+    return -abs(pos[0] - goal[0]) - abs(pos[1] - goal[1])
+
+# Function to select parents for crossover
+def select_parents(population):
+    return random.choices(population, weights=[fitness(ind) for ind in population], k=2)
+
+# Crossover function
+def crossover(parent1, parent2):
+    split = random.randint(1, len(parent1)-1)
+    child1 = parent1[:split] + parent2[split:]
+    child2 = parent2[:split] + parent1[split:]
+    return child1, child2
+
+# Mutation function
+def mutate(individual):
+    if random.random() < mutation_rate:
+        individual[random.randint(0, len(individual)-1)] = random.choice(moves)
+    return individual
+
+# Main Genetic Algorithm loop
+def genetic_algorithm():
+    population = initialize_population()
+    
+    for generation in range(generations):
+        population = sorted(population, key=lambda ind: fitness(ind), reverse=True)
+        
+        if fitness(population[0]) == 0:
+            print(f"Solution found in generation {generation}")
+            return population[0]
+        
+        new_population = population[:population_size//2]
+        
+        while len(new_population) < population_size:
+            parent1, parent2 = select_parents(population)
+            child1, child2 = crossover(parent1, parent2)
+            new_population.append(mutate(child1))
+            new_population.append(mutate(child2))
+        
+        population = new_population
+    
+    print("No solution found.")
+    return None
+
+solution = genetic_algorithm()
+if solution:
+    print("Path found:", solution)
+else:
+    print("No path found.")
+
+
+word
+import random
+
+def is_one_letter_diff(word1, word2):
+    """Check if two words differ by exactly one letter."""
+    return sum(c1 != c2 for c1, c2 in zip(word1, word2)) == 1
+
+def initialize_population(start_word, target_word, population_size):
+    """Create an initial population of sequences."""
+    population = []
+    for _ in range(population_size):
+        individual = [start_word]
+        while individual[-1] != target_word:
+            next_word = ''.join(random.choice('abcdefghijklmnopqrstuvwxyz') if c == target_word[i] else c for i, c in enumerate(individual[-1]))
+            individual.append(next_word)
+        population.append(individual)
+    return population
+
+def fitness(individual, target_word):
+    """Calculate fitness based on how close the individual is to the target."""
+    current_word = individual[-1]
+    if current_word == target_word:
+        return float('inf')  # Highest fitness for the correct word
+    return -sum(c1 != c2 for c1, c2 in zip(current_word, target_word))
+
+def select_parents(population):
+    """Select two parents from the population based on fitness."""
+    weights = [fitness(ind) for ind in population]
+    return random.choices(population, weights=weights, k=2)
+
+def crossover(parent1, parent2):
+    """Crossover between two parents to create two children."""
+    split = random.randint(1, min(len(parent1), len(parent2)) - 1)
+    child1 = parent1[:split] + parent2[split:]
+    child2 = parent2[:split] + parent1[split:]
+    return child1, child2
+
+def mutate(individual, valid_words):
+    """Randomly mutate an individual."""
+    if random.random() < 0.1:  # Mutation rate
+        for i in range(len(individual)):
+            if random.random() < 0.5:  # Mutate half the time
+                possible_words = [word for word in valid_words if is_one_letter_diff(individual[i], word)]
+                if possible_words:
+                    individual[i] = random.choice(possible_words)
+    return individual
+
+def genetic_algorithm(start_word, target_word, valid_words, population_size=100, generations=1000):
+    """Run the genetic algorithm to find the word ladder."""
+    population = initialize_population(start_word, target_word, population_size)
+    
+    for generation in range(generations):
+        population = sorted(population, key=lambda ind: fitness(ind, target_word), reverse=True)
+
+        if fitness(population[0], target_word) == float('inf'):
+            print(f"Solution found in generation {generation}: {population[0]}")
+            return population[0]
+
+        new_population = population[:population_size // 2]
+
+        while len(new_population) < population_size:
+            parent1, parent2 = select_parents(population)
+            child1, child2 = crossover(parent1, parent2)
+            new_population.append(mutate(child1, valid_words))
+            new_population.append(mutate(child2, valid_words))
+
+        population = new_population
+
+    print("No transformation sequence exists.")
+    return None
+
+# Example usage
+start = "hit"
+target = "cog"
+words = {"hot", "dot", "dog", "lot", "log", "cog"}
+
+result = genetic_algorithm(start, target, words)
+print("Transformation sequence:", result)
+
+
+
+
+
+nqueen 
+import random
+
+def generate_initial_population(n, population_size):
+    """Generate an initial population of N-Queens arrangements."""
+    return [random.sample(range(n), n) for _ in range(population_size)]
+
+def calculate_fitness(arrangement):
+    """Calculate fitness based on non-threatening queens."""
+    non_attacking_pairs = 0
+    n = len(arrangement)
+    
+    for i in range(n):
+        for j in range(i + 1, n):
+            if arrangement[i] != arrangement[j] and abs(arrangement[i] - arrangement[j]) != j - i:
+                non_attacking_pairs += 1
+    
+    return non_attacking_pairs
+
+def select_parents(population):
+    """Select two parents from the population based on fitness."""
+    weights = [calculate_fitness(ind) for ind in population]
+    return random.choices(population, weights=weights, k=2)
+
+def crossover(parent1, parent2):
+    """Crossover between two parents to create two children."""
+    split = random.randint(1, len(parent1) - 1)
+    child1 = parent1[:split] + parent2[split:]
+    child2 = parent2[:split] + parent1[split:]
+    return child1, child2
+
+def mutate(individual):
+    """Randomly mutate an individual by changing the position of a queen."""
+    if random.random() < 0.1:  # Mutation rate
+        idx = random.randint(0, len(individual) - 1)
+        individual[idx] = random.randint(0, len(individual) - 1)
+    return individual
+
+def genetic_algorithm(n, population_size=100, generations=1000):
+    """Run the genetic algorithm to solve the N-Queens problem."""
+    population = generate_initial_population(n, population_size)
+
+    for generation in range(generations):
+        population = sorted(population, key=lambda ind: calculate_fitness(ind), reverse=True)
+
+        if calculate_fitness(population[0]) == (n * (n - 1)) // 2:
+            print(f"Solution found in generation {generation}: {population[0]}")
+            return population[0]
+
+        new_population = population[:population_size // 2]
+
+        while len(new_population) < population_size:
+            parent1, parent2 = select_parents(population)
+            child1, child2 = crossover(parent1, parent2)
+            new_population.append(mutate(child1))
+            new_population.append(mutate(child2))
+
+        population = new_population
+
+    print("No solution found.")
+    return None
+
+# Example usage
+n = 8  # Number of queens
+solution = genetic_algorithm(n)
+print("Arrangement of queens:", solution)
